@@ -22,4 +22,16 @@ def main():
                 break
 
             conn.sendall(message.encode("utf-8"))
-            data = conn
+            data = conn.recv(1024)
+            
+            if not data:
+                print("No data received.")
+                break
+            
+            print("Received from server:", data.decode("utf-8"))
+        
+        # Close the SSL connection
+        conn.close()
+
+if __name__ == "__main__":
+    main()
