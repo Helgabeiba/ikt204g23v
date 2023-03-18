@@ -1,30 +1,25 @@
 import socket
 import ssl
-import sys
-import random
-import string
+
+HOST = "localhost"
+PORT = 8443
+CERT_FILE = "example.crt"
 
 def main():
-    server_ip = "localhost"
-    server_port = 8443
+    context = ssl.create_default_context(cafile=CERT_FILE, capath=".")
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
+        conn = context.wrap_socket(sock, server_side=False, server_hostname=HOST)
+        conn.connect((HOST, PORT))
 
-    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile="example.crt")
-    context.load_verify_locations(capath=".")
+        print("Cipher suite:", conn.cipher()[0])
 
-    ssl_sock = context.wrap_socket(sock, server_hostname=server_ip)
-    ssl_sock.connect((server_ip, server_port))
+        while True:
+            message = input("Enter a message to send (type 'exit' to quit): ")
+            if message.lower() == "exit":
+                break
 
-    print("Negotiated Cipher Suite: ", ssl_sock.cipher())
-
-    test_data = "".join([random.choice(string.ascii_lowercase) for i in range(15)]) + "\n"
-    ssl_sock.sendall(test_data.encode("utf-8"))
-
-    response = ssl_sock.recv(1024)
-    print("Received from server: ", response.decode("utf-8"))
-
-    ssl_sock.close()
-
-if __name__ == "__main__":
-    main()
+            conn.sendall(message.encode("utf-8"))
+            data = conn

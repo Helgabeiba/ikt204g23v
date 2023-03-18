@@ -1,47 +1,46 @@
-import sys
+from OpenSSL import crypto
 import random
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.hazmat.backends import default_backend
-import datetime
+import string
+import sys
 
-key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=2048,
-    backend=default_backend()
-)
+KEY_SIZE = 4096
 
-subject = issuer = x509.Name([
-    x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
-    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"California"),
-    x509.NameAttribute(NameOID.LOCALITY_NAME, u"San Francisco"),
-    x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Example Company"),
-    x509.NameAttribute(NameOID.COMMON_NAME, u"example.com"),
-])
+def write_to_file(data, filename):
+    with open(filename, "wb") as file:
+        file.write(data)
 
-cert = x509.CertificateBuilder().subject_name(
-    subject
-).issuer_name(
-    issuer
-).public_key(
-    key.public_key()
-).serial_number(
-    random.randint(1000000000, sys.maxsize)
-).not_valid_before(
-    datetime.datetime.utcnow()
-).not_valid_after(
-    datetime.datetime.utcnow() + datetime.timedelta(days=365)
-).add_extension(
-    x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
-    critical=False,
-).sign(key, hashes.SHA256(), default_backend())
+def create_public_key_pair(key_file):
+    key = crypto.PKey()
+    key.generate_key(crypto.TYPE_RSA, KEY_SIZE)
+    pem_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+    write_to_file(pem_key, key_file)
+    return key
 
-with open("example.key", "wb") as f:
-    f.write(key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()))
+def create_self_signed_cert(cert_file, key):
+    cert = crypto.X509()
+    cert.set_serial_number(random.randint(1000000000, sys.maxsize))
+    cert.set_notBefore(b"20230101000000Z")
+    cert.set_notAfter(b"20250101000000Z")
 
-with open("example.crt", "wb") as f:
-    f.write(cert.public_bytes(Encoding.PEM))
+    subject = cert.get_subject()
+    subject.C = "NO"
+    subject.ST = "Aust-Agder"
+    subject.L = "Grimstad"
+    subject.O = "UiA"
+    subject.OU = "IKT"
+    subject.CN = "localhost"
+
+    cert.set_issuer(subject)
+    cert.set_pubkey(key)
+    cert.sign(key, "SHA256")
+
+    pem_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+    write_to_file(pem_cert, cert_file)
+    return cert
+
+if __name__ == "__main__":
+    key_file = "example.key"
+    cert_file = "example.crt"
+
+    key = create_public_key_pair(key_file)
+    create_self_signed_cert(cert_file, key)
