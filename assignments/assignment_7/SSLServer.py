@@ -1,35 +1,37 @@
 import socket
-from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 import ssl
 
-def handle_client(conn):
-    while True:
-        data = conn.recv(1024)
-        if not data:
-            break
-        response = data.decode().upper().encode()
-        conn.sendall(response)
+HOST = "localhost"
+PORT = 8443
+KEY_FILE = "example.key"
+CERT_FILE = "example.crt"
 
 def main():
-    server_ip = "localhost"
-    server_port = 8443
-
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.load_cert_chain(certfile="example.crt", keyfile="example.key")
+    context.load_cert_chain(certfile=CERT_FILE, keyfile=KEY_FILE)
+    
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((HOST, PORT))
+        sock.listen(5)
 
-    server_socket = socket.socket(AF_INET, SOCK_STREAM)
-    server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    server_socket.bind((server_ip, server_port))
-    server_socket.listen(5)
+        print("Server is listening on", HOST, ":", PORT)
 
-    print("Server listening on {}:{}".format(server_ip, server_port))
+        while True:
+            conn, addr = sock.accept()
+            print("Client connected:", addr)
+            conn_ssl = context.wrap_socket(conn, server_side=True)
 
-    while True:
-        client_socket, client_addr = server_socket.accept()
-        print("Connection from:", client_addr)
-        with context.wrap_socket(client_socket, server_side=True) as secure_sock:
-            handle_client(secure_sock)
-        print("Connection closed:", client_addr)
+            try:
+                data = conn_ssl.recv(1024).decode("utf-8")
+                while data:
+                    print("Received:", data)
+                    response = data.upper().encode("utf-8")
+                    conn_ssl.sendall(response)
+                    data = conn_ssl.recv(1024).decode("utf-8")
+            finally:
+                conn_ssl.shutdown(socket.SHUT_RDWR)
+                conn_ssl.close()
 
 if __name__ == "__main__":
     main()

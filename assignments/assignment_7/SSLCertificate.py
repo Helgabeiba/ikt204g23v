@@ -1,22 +1,24 @@
 from OpenSSL import crypto
+import random
+import string
+import sys
 
 KEY_SIZE = 4096
 
 def write_to_file(data, filename):
     with open(filename, "wb") as file:
         file.write(data)
-        file.close()
 
 def create_public_key_pair(key_file):
-    k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, KEY_SIZE)
-    pem_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k)
+    key = crypto.PKey()
+    key.generate_key(crypto.TYPE_RSA, KEY_SIZE)
+    pem_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
     write_to_file(pem_key, key_file)
-    return k
+    return key
 
 def create_self_signed_cert(cert_file, key):
     cert = crypto.X509()
-    cert.set_serial_number(1001)
+    cert.set_serial_number(random.randint(1000000000, sys.maxsize))
     cert.set_notBefore(b"20230101000000Z")
     cert.set_notAfter(b"20250101000000Z")
 
