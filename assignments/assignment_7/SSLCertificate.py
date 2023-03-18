@@ -21,7 +21,6 @@ def create_self_signed_cert(cert_file, key):
     cert.set_serial_number(random.randint(1000000000, sys.maxsize))
     cert.set_notBefore(b"20230101000000Z")
     cert.set_notAfter(b"20250101000000Z")
-
     subject = cert.get_subject()
     subject.C = "NO"
     subject.ST = "Aust-Agder"
@@ -29,11 +28,9 @@ def create_self_signed_cert(cert_file, key):
     subject.O = "UiA"
     subject.OU = "IKT"
     subject.CN = "localhost"
-
     cert.set_issuer(subject)
     cert.set_pubkey(key)
     cert.sign(key, "SHA256")
-
     pem_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
     write_to_file(pem_cert, cert_file)
     return cert
@@ -41,6 +38,5 @@ def create_self_signed_cert(cert_file, key):
 if __name__ == "__main__":
     key_file = "example.key"
     cert_file = "example.crt"
-
     key = create_public_key_pair(key_file)
     create_self_signed_cert(cert_file, key)

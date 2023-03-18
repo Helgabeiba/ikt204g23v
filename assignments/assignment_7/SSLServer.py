@@ -14,14 +14,12 @@ def main():
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((HOST, PORT))
         sock.listen(5)
-
         print("Server is listening on", HOST, ":", PORT)
 
         while True:
             conn, addr = sock.accept()
             print("Client connected:", addr)
             conn_ssl = context.wrap_socket(conn, server_side=True)
-
             try:
                 data = conn_ssl.recv(1024).decode("utf-8")
                 while data:
