@@ -27,7 +27,7 @@ def main():
     print("Negotiated Cipher Suite: ", ssl_sock.cipher())
 
     # Test communication: send a lowercase sentence, receive it in uppercase
-    test_data = "".join([random.choice(string.ascii_lowercase) for i in range(15)]) + "\n"
+    test_data = "".join([random.choice(string.ascii_lowercase) for i in range(15)])
     ssl_sock.sendall(test_data.encode("utf-8"))
 
     response = ssl_sock.recv(1024)
