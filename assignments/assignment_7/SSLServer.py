@@ -17,7 +17,7 @@ def main():
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.load_cert_chain(certfile="example.crt", keyfile="example.key")
 
-    server_socket = socket(AF_INET, SOCK_STREAM)
+    server_socket = socket.socket(AF_INET, SOCK_STREAM)
     server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     server_socket.bind((server_ip, server_port))
     server_socket.listen(5)
