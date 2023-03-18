@@ -17,6 +17,8 @@ def main():
                 ssock.sendall(message.encode())
                 data = ssock.recv(1024)
                 print("Received from server:", data.decode())
+                
+            secure_sock.sendall(b"exit")
 
 if __name__ == "__main__":
     main()
