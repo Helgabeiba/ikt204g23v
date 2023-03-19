@@ -1,8 +1,8 @@
 from socket import *
-serverName = 'localhost'
+
 serverPort = 12000
 serverSocket = socket(AF_INET, SOCK_DGRAM)
-serverSocket.bind((serverName, serverPort))
+serverSocket.bind(('localhost', serverPort))
 print('The server is ready to receive')
 while True:
  message, clientAddress = serverSocket.recvfrom(2048)
